@@ -7,7 +7,7 @@ import csv
 class LineItem:
     def __init__(self, sku, quantity):
         self.sku = sku
-        self.quantity = quantity
+        self.quantity = int(quantity)
     def __repr__(self):
         return "(sku:{0} quantity:{1})".format(self.sku, self.quantity)
 
@@ -23,10 +23,21 @@ class InventoryItem:
     def __init__(self, sku, is_online, regular_inv, wareroom_inv):
         self.sku = sku
         self.is_online = is_online
-        self.wareroom_inv = wareroom_inv
-        self.regular_inv = regular_inv
+        self.regular_inv = int(regular_inv)
+        self.wareroom_inv = int(wareroom_inv)
+    def total_inv(self):
+        return self.regular_inv + self.wareroom_inv
+    def decrease_inv(self, is_online, quantity):
+        if (line_item.sku == '133'):
+            print transaction
+        if (transaction.is_online):
+            self.wareroom_inv -= line_item.quantity
+        else:
+            self.regular_inv -= line_item.quantity
+
     def __repr__(self):
-        return "sku:{0} Online:{1} Regular Inventory:{2} Wareroom Inventory:{3}".format(self.sku, self.is_online, self.wareroom_inv, self.regular_inv)
+        return "sku:{0} Online:{1} Regular Inventory:{2} Wareroom Inventory:{3}".format(self.sku, self.is_online, self.regular_inv, self.wareroom_inv)
+
 
 inventory = {}
 with open('WareroomInv.csv', 'rU') as infile:
@@ -35,7 +46,7 @@ with open('WareroomInv.csv', 'rU') as infile:
     for row in reader:
         i = InventoryItem(row[0], row[4], row[2], row[3])
         inventory[i.sku] = i
-    print inventory
+    #print inventory
 
 transactions = []
 with open('MultTrans.csv', 'rU') as infile:
@@ -47,4 +58,16 @@ with open('MultTrans.csv', 'rU') as infile:
             lineItems.append( LineItem( row[i] , row[i+1]) )
         t = Transaction(row[22], lineItems)
         transactions.append(t)
-    print transactions
+    #print transactions
+
+for transaction in transactions:
+    for line_item in transaction.line_items:
+        i = inventory[line_item.sku]
+        i.decrease_inv(transaction.is_online, line_item.quantity)
+
+with open('inventory_new.csv', 'w') as outfile:
+    writer = csv.writer(outfile)
+    for item in inventory.values():
+        writer.writerow([item.sku, item.total_inv(), item.regular_inv, item.wareroom_inv])
+
+
