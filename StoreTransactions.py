@@ -27,14 +27,16 @@ class InventoryItem:
         self.wareroom_inv = int(wareroom_inv)
     def total_inv(self):
         return self.regular_inv + self.wareroom_inv
-    def decrease_inv(self, is_online, quantity):
-        if (line_item.sku == '133'):
-            print transaction
-        if (transaction.is_online):
-            self.wareroom_inv -= line_item.quantity
-        else:
-            self.regular_inv -= line_item.quantity
 
+    def decrease_inv(self, is_online, quantity):
+        if (is_online):
+            temp_quantity = min(quantity, self.wareroom_inv)
+            self.wareroom_inv -= temp_quantity
+            quantity -= temp_quantity
+            if (quantity > 0):
+                self.regular_inv -= quantity
+        else:
+            self.regular_inv -= quantity
     def __repr__(self):
         return "sku:{0} Online:{1} Regular Inventory:{2} Wareroom Inventory:{3}".format(self.sku, self.is_online, self.regular_inv, self.wareroom_inv)
 
@@ -44,7 +46,7 @@ with open('WareroomInv.csv', 'rU') as infile:
     reader = csv.reader(infile)
     reader.next()
     for row in reader:
-        i = InventoryItem(row[0], row[4], row[2], row[3])
+        i = InventoryItem(row[0], row[4]=='1', row[2], row[3])
         inventory[i.sku] = i
     #print inventory
 
@@ -56,7 +58,7 @@ with open('MultTrans.csv', 'rU') as infile:
         lineItems = []
         for i in range (2, int(row[1]) * 2 + 1, 2):
             lineItems.append( LineItem( row[i] , row[i+1]) )
-        t = Transaction(row[22], lineItems)
+        t = Transaction(row[22]=='1', lineItems)
         transactions.append(t)
     #print transactions
 
@@ -69,5 +71,3 @@ with open('inventory_new.csv', 'w') as outfile:
     writer = csv.writer(outfile)
     for item in inventory.values():
         writer.writerow([item.sku, item.total_inv(), item.regular_inv, item.wareroom_inv])
-
-
