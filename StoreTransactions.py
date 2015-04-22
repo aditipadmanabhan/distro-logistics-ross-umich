@@ -29,14 +29,24 @@ class InventoryItem:
         return self.regular_inv + self.wareroom_inv
 
     def decrease_inv(self, is_online, quantity):
+        temp_wareroominv = self.wareroom_inv
+        temp_regularinv = self.regular_inv
         if (is_online):
             temp_quantity = min(quantity, self.wareroom_inv)
             self.wareroom_inv -= temp_quantity
             quantity -= temp_quantity
             if (quantity > 0):
                 self.regular_inv -= quantity
+                if self.regular_inv < 0:
+                    self.regular_inv = temp_regularinv
+                    self.wareroom_inv = temp_wareroominv
+                    return False
         else:
             self.regular_inv -= quantity
+            if self.regular_inv < 0:
+                self.regular_inv = temp_regularinv
+                return False
+        return True
     def __repr__(self):
         return "sku:{0} Online:{1} Regular Inventory:{2} Wareroom Inventory:{3}".format(self.sku, self.is_online, self.regular_inv, self.wareroom_inv)
 
@@ -62,10 +72,17 @@ with open('MultTrans.csv', 'rU') as infile:
         transactions.append(t)
     #print transactions
 
+unsatisfied = 0
 for transaction in transactions:
+    transaction_unsatisfied = False
     for line_item in transaction.line_items:
         i = inventory[line_item.sku]
-        i.decrease_inv(transaction.is_online, line_item.quantity)
+        if i.decrease_inv(transaction.is_online, line_item.quantity) is False:
+            transaction_unsatisfied = True
+    if transaction_unsatisfied is True:
+        unsatisfied += 1
+
+print 'The percentage of transactions unfulfilled is {0}%'.format(float(unsatisfied) / len(transactions) * 100)
 
 with open('inventory_new.csv', 'w') as outfile:
     writer = csv.writer(outfile)
